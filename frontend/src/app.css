@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --color-bg: #10151c;
+  --color-surface: #1a222c;
+  --color-surface-raised: #212b37;
+  --color-text: #eef1f5;
+  --color-text-muted: #8a97a6;
+  --color-accent-gold: #d4a24c;
+  --color-accent-teal: #4a9b8e;
+  --color-error: #e0847a;
+  --color-border: #2a3541;
+
+  --font-display: 'Fraunces', serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+button,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-gold);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(212, 162, 76, 0.28);
+  color: var(--color-text);
+}

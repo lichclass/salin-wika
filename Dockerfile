@@ -23,4 +23,4 @@ COPY . .
 RUN mkdir -p results
 
 ENTRYPOINT ["python", "main.py"]
-CMD ["training"]
+CMD ["--help"]

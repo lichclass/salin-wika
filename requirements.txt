@@ -1,8 +1,11 @@
-# AI Amended: Keep only direct runtime dependencies and prefer the CUDA 12.8 PyTorch wheel where supported.
+# AI Amended: Keep only direct application and test dependencies with the supported CUDA wheel source.
 --extra-index-url https://download.pytorch.org/whl/cu128
 
 polars==1.43.2
 PyYAML==6.0.3
 sacrebleu==2.6.0
-spacy==3.8.15
+sentencepiece==0.2.1
 torch==2.11.0
+transformers==5.15.1
+accelerate==1.14.0
+pytest==9.0.2

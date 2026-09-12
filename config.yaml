@@ -1,39 +1,60 @@
-# AI Amended: Provide the single configuration surface for training and translation.
+# AI Amended: Configure the three NLLB pipelines and select original or locally trained models.
 device: auto
 
+model:
+  # Use "default" or a directory name available inside models/.
+  version: default
+  default_name_or_path: facebook/nllb-200-distilled-600M
+  directory: models
+
+# v0.0 languages
+languages:
+  tagalog: tgl_Latn
+  cebuano: ceb_Latn
+  ilocano: ilo_Latn
+  waray: war_Latn
+  pangasinense: pag_Latn
+
+generation:
+  max_length: 128
+  num_beams: 5
+
 data:
-  corpus_path: corpus/cebtag_105k.csv
-  src_col: cebuano
-  tgt_col: tagalog
   train_size: 0.8
   valid_size: 0.1
   test_size: 0.1
-  min_freq: 2
-  max_length: 100
-  lowercase: true
+  max_length: 128
 
-model:
-  embedding_dim: 256
-  hidden_dim: 512
-  bidirectional: false
-  peeky: false
-  dropout: 0.3
-  num_layers: 2
+# Corpus columns must be: source_sentence, target_sentence, src_lang, tgt_lang.
+fine_tuning:
+  run_name: multilingual-finetuned
+  corpus_path: corpus/multilingual.csv
+  switch_source_target: false
+
+# Every row must contain the new language on exactly one side.
+adaptation:
+  run_name: hiligaynon-adapted
+  corpus_path: corpus/hiligaynon_parallel.csv
+  switch_source_target: false
+  new_language:
+    name: hiligaynon
+    code: hil_Latn
 
 training:
-  name: seq2seq
-  batch_size: 64
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 2
+  num_train_epochs: 3
+  learning_rate: 0.00002
+  optimizer: adamw_torch
+  weight_decay: 0.01
+  warmup_steps: 0
+  max_grad_norm: 1.0
+  early_stopping_patience: 3
+  save_total_limit: 2
+  logging_steps: 100
   num_workers: 0
   pin_memory: true
-  epochs: 20
-  optimizer: adamw
-  lr: 0.001
-  patience: 5
-  max_grad_norm: 1.0
+  fp16: false
+  bf16: false
   seed: 42
-
-translation:
-  model_name: seq2seq
-  text: Maayong buntag.
-  lowercase: true
-  max_length: 100
+  resume_from_checkpoint: false

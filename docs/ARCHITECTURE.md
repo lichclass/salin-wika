@@ -1,59 +1,103 @@
 # Architecture
 
-<!-- AI Amended: Explain the connected model and application architecture for maintainers. -->
+<!-- AI Amended: Describe the maintained three-pipeline NLLB architecture. -->
 
-_Written August 15, 2026 at 5:18 AM (Asia/Manila)._
+SalinWika is a configuration-driven CLI built around one shared NLLB runtime and
+three pipelines: translation, full fine-tuning, and new-language adaptation.
 
-## Scope
+## Execution flow
 
-The current system is a Cebuano-to-Tagalog sequence-to-sequence translator without attention. It supports the existing vanilla, bidirectional-encoder, peeky-decoder, and combined modes through `config.yaml`. Weights & Biases, `.env.example`, and `testing/` are intentionally not part of the runtime.
+`main.py` loads `config.yaml`, preloads the selected tokenizer and model, and
+dispatches one command:
 
-## End-to-end flow
+- `translate` starts interactive translation.
+- `finetune` trains on languages already supported by the selected model.
+- `adapt` adds one unsupported language token and trains it from parallel data.
 
-Training follows this path:
+The preloader resolves `device`, loads the tokenizer before the model, applies
+`generation.max_length` and `generation.num_beams`, moves the model to the
+selected device, and returns one shared `Runtime`. Transformer progress bars are
+disabled in `src/preloading.py`.
 
-`config.yaml` → `main.py training` → `TrainingPipeline` → CSV split → vocabularies → datasets and length-bucketed loaders → `Seq2Seq` → epoch training → validation and early stopping → test loss/perplexity/BLEU → `results/<training.name>/`
+## Model selection
 
-Translation follows this path:
+`model.version: default` loads `model.default_name_or_path`. Any other version
+loads `models/<version>` or the directory configured by `model.directory`.
+Local versions must be directory names, not arbitrary paths.
 
-`config.yaml` → `main.py translation` → saved run configuration and vocabularies → `Seq2Seq` reconstruction → `best_model.pt` → greedy decoding → translated text
+The same selection applies to all three pipelines. A saved fine-tuned or adapted
+model can therefore be used for later translation or training by changing only
+`model.version`.
 
-## Model
+## Translation pipeline
 
-The encoder embeds the source token IDs, applies dropout, packs padded batches using their true lengths, and processes them with an LSTM. Its final hidden and cell states summarize the source sentence.
+`src/translation.py` prompts for the source and target language before accepting
+text. Both values may be configured language names or NLLB codes. The resolver
+requires the language to exist in `languages` and in the selected tokenizer.
 
-The decoder embeds the target input and runs a second LSTM. During training it receives the shifted ground-truth target sequence (teacher forcing). During inference it receives its previous highest-probability token (greedy decoding) until `<eos>` or `translation.max_length`.
+For each input, the pipeline:
 
-When `model.bidirectional` is true, the encoder's forward and backward final states are concatenated and projected through learned hidden/cell bridges into the decoder dimension. When `model.peeky` is true, the encoder context is concatenated to every decoder input and output step. No attention matrix or per-source-position context is computed.
+1. Sets the tokenizer source and target language codes.
+2. Tokenizes and truncates the source text.
+3. Forces the target language token during beam-search generation.
+4. Decodes the generated token IDs without special tokens.
+5. Continues until `/exit`, EOF, or interruption.
 
-## Data and vocabulary
+## Fine-tuning pipeline
 
-`TrainingPipeline` reads the configured CSV with Polars and deterministically shuffles it using `training.seed`. It creates train, validation, and test slices from the configured ratios. Only the training slice builds vocabularies, preventing validation/test vocabulary leakage.
+`src/finetuning.py` performs full-weight fine-tuning. Its CSV may contain any
+number of language pairs, but every row must use this schema:
 
-The multilingual blank spaCy tokenizer lowercases when configured and preserves token boundaries. Source sequences end with `<eos>`. Target sequences begin with `<bos>` and end with `<eos>`. The collator pads each batch dynamically, while `LengthBucketBatchSampler` groups similarly sized sequences to reduce padding.
+```text
+source_sentence,target_sentence,src_lang,tgt_lang
+```
 
-## Training and evaluation
+`src_lang` and `tgt_lang` may be configured names or NLLB codes. Every language
+must be present in `languages` and supported by the selected tokenizer. If any
+language is unavailable, the entire run stops and directs the user to adaptation.
 
-Cross-entropy ignores target padding and is normalized by the number of real target tokens. Gradients are clipped using `training.max_grad_norm`. The configured optimizer can be `adamw`, `adam`, or `sgd`.
+When `fine_tuning.switch_source_target` is true, all four source/target fields are
+reversed before language resolution and splitting.
 
-Every epoch writes `checkpoint_<epoch>.pt`. A lower validation loss replaces `best_model.pt`; training stops after `training.patience` epochs without improvement. The best model is evaluated once on the held-out test set for loss, perplexity, and corpus BLEU.
+## Adaptation pipeline
 
-## Device and container behavior
+`src/adaptation.py` is transfer learning from NLLB, not pretraining from random
+weights. It accepts the same four-column corpus format as fine-tuning.
 
-With `device: auto`, runtime selection is CUDA first, then Apple MPS, then CPU. Explicit unavailable devices fail immediately instead of silently training elsewhere.
+`adaptation.new_language` defines one language name and one NLLB-style code. The
+name/code must not already be configured or supported by the selected tokenizer.
+Every corpus row must place that new language on exactly one side; the other side
+may be any configured, tokenizer-supported language.
 
-The Docker image uses Python 3.12 and the same `requirements.txt` as local setup. ARM64 builds preinstall the CPU PyTorch wheel because Apple MPS is unavailable inside the Linux VM; AMD64 builds install the configured CUDA 12.8 wheel for the NVIDIA training target. Passing Docker's `--gpus all` exposes a supported NVIDIA GPU; without it, PyTorch runs on CPU. The image entry point is `python main.py`, so the container accepts only `training` or `translation` as its application command.
+After validation, the pipeline adds the language token, resizes the model token
+embeddings, and runs the shared full-weight training flow. Setting
+`adaptation.switch_source_target` reverses every row. Reverse examples are not
+created automatically.
 
-## Result layout
+## Shared training flow
 
-Each run is self-contained below `results/<training.name>/`:
+`src/utils.py` owns corpus validation, deterministic splitting, lazy per-row
+tokenization, trainer construction, artifact saving, and evaluation.
 
-- `best_model.pt`: weights selected by validation loss.
-- `checkpoint_<epoch>.pt`: per-epoch weights.
-- `configs.json`: the exact configuration used for training.
-- `src_token_to_id.json` and `tgt_token_to_id.json`: token lookup maps.
-- `src_id_to_token.json` and `tgt_id_to_token.json`: reverse lookup lists.
-- `training_data.json`: epoch loss and perplexity history.
-- `test_results.json`: held-out metrics, hypotheses, and references.
+The configured train, validation, and test proportions must be positive and sum
+to one. Each split must contain at least one row. Training uses
+`Seq2SeqTrainer`, dynamic sequence-to-sequence padding, epoch validation and
+checkpointing, optional early stopping, and best-model restoration by validation
+loss. Gradient accumulation is not configured, so the Trainer value remains one.
 
-Translation reconstructs the model from these artifacts, so changing model dimensions in the current `config.yaml` does not corrupt an older run. Only `device` and the `translation` section are taken from the current config during inference.
+Held-out records are grouped by target language so generation forces the correct
+target token for every pair. Final test metrics include loss, FLORES-200 spBLEU,
+and chrF++.
+
+Training only directly optimizes the language directions present in the corpus.
+Transfer to an unseen pair, such as an adapted language to another configured
+language, may occur but is not guaranteed without parallel data for that pair.
+
+## Artifacts
+
+Each training run writes to `models/<run_name>` or the configured model directory.
+The directory contains the model, tokenizer, Trainer state, bounded checkpoints,
+the effective YAML configuration, and train, validation, and test metrics.
+
+The source repository and the selected NLLB weights retain their respective
+licenses; saving a local version does not change the NLLB model license.

@@ -1,54 +1,67 @@
-# AI Amended: Connect the project through a minimal two-command CLI driven only by config.yaml.
 import argparse
-
 from pathlib import Path
 
 import yaml
 
-from utils.inference import translate_from_results
-from utils.pipelines import TrainingPipeline
-
+from src.preloading import preload
+from src.translation import TranslationPipeline
+from src.finetuning import FineTuningPipeline
+from src.adaptation import AdaptationPipeline
 
 CONFIG_PATH = Path("config.yaml")
-RESULTS_DIR = Path("results")
 
 
+# AI Amended: Expose the four NLLB pipelines through a small config-driven CLI.
 def load_config(config_path=CONFIG_PATH):
+
+    print("Loading configs...")
+
     with open(config_path, encoding="utf-8") as file:
         config = yaml.safe_load(file)
 
     if not isinstance(config, dict):
         raise ValueError(f"'{config_path}' must contain a YAML mapping.")
-
+    
+    print("Loaded: configs...")
+    
     return config
 
 
-def run_training(config):
-    RESULTS_DIR.mkdir(exist_ok=True)
-    TrainingPipeline(config=config).train(results_dir=RESULTS_DIR)
-
-
-def run_translation(config):
-    translation = translate_from_results(config=config, results_dir=RESULTS_DIR)
-    print(translation)
-
-
 def create_parser():
-    parser = argparse.ArgumentParser(description="Train or use the Seq2Seq translator.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("training", help="Train and evaluate the configured model.")
-    subparsers.add_parser("translation", help="Translate the text in config.yaml.")
+
+    parser = argparse.ArgumentParser(description="Run NLLB multilingual translation pipelines.")
+
+    parser.add_argument(
+        "command",
+        choices=("translate", "finetune", "adapt"),
+        help="Pipeline to run; all settings come from config.yaml.",
+    )
+
     return parser
 
 
 def main():
+
     args = create_parser().parse_args()
     config = load_config()
+    runtime = preload(config)
 
-    if args.command == "training":
-        run_training(config)
-    else:
-        run_translation(config)
+    pipeline_args = {
+        "runtime": runtime,
+        "config": config,
+    }
+
+    if args.command == "translate":
+        translation_pipeline = TranslationPipeline(**pipeline_args)
+        translation_pipeline.run_translation()
+
+    elif args.command == "finetune":
+        finetuning_pipeline = FineTuningPipeline(**pipeline_args)
+        finetuning_pipeline.run_fine_tuning()
+
+    elif args.command == "adapt":
+        adaptation_pipeline = AdaptationPipeline(**pipeline_args)
+        adaptation_pipeline.run_adaptation()
 
 
 if __name__ == "__main__":

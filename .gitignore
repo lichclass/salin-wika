@@ -1,6 +1,7 @@
 # AI Amended: Keep local environments, caches, and generated training artifacts out of clones.
 .venv/
 __pycache__/
+.pytest_cache/
 *.py[cod]
 results/
 old/

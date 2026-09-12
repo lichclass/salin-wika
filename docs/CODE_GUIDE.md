@@ -1,74 +1,94 @@
 # Code Guide
 
-<!-- AI Amended: Catalog the maintained functions and show how modules call one another. -->
+<!-- AI Amended: Map source, configuration, and tests to the current architecture. -->
 
-_Written August 15, 2026 at 5:18 AM (Asia/Manila)._
+## Entry point
 
-## Entry point: `main.py`
+`main.py` parses `translate`, `finetune`, or `adapt`, loads `config.yaml`, creates
+the shared runtime through `preload()`, and instantiates the selected pipeline.
+All runtime and training settings come from YAML.
 
-- `load_config()` parses `config.yaml` with safe YAML loading and requires a top-level mapping.
-- `run_training()` creates `results/` and hands the configuration to `TrainingPipeline`.
-- `run_translation()` loads the configured run and prints one translation.
-- `create_parser()` defines the only two CLI commands: `training` and `translation`.
-- `main()` dispatches the selected command.
+## Source modules
 
-## Model: `models/seq2seq.py`
+### `src/preloading.py`
 
-- `Encoder.__init__()` creates the source embedding, LSTM, dropout, and hidden-state normalization.
-- `Encoder.forward()` embeds and packs a padded source batch, then returns final hidden and cell states.
-- `Decoder.__init__()` creates the target embedding, LSTM, dropout, output normalization, and vocabulary projection. Peeky mode expands its input/output sizes.
-- `Decoder.forward()` decodes one or more target positions and returns vocabulary logits plus recurrent states.
-- `Seq2Seq.__init__()` connects the encoder and decoder and creates bridge projections only for a bidirectional encoder.
-- `Seq2Seq.bridge_states()` converts bidirectional final states into one decoder layer; vanilla states pass through unchanged.
-- `Seq2Seq.encode()` returns decoder initial states and the fixed encoder context.
-- `Seq2Seq.forward()` encodes a source batch and teacher-forces the supplied decoder input.
+- `Runtime` holds the tokenizer, model, device, and selected model path.
+- `preload()` resolves the model version and device, loads the Hugging Face
+  objects, and applies generation settings.
 
-## Preprocessing: `utils/preprocessing.py`
+### `src/translation.py`
 
-- `spacy_tokenizer()` normalizes a value to text, optionally lowercases it, and tokenizes it.
-- `detokenize()` joins generated tokens and removes spaces before common punctuation.
-- `build_vocab()` counts training tokens, reserves the four special tokens, applies `min_freq`, and returns forward/reverse maps.
-- `TranslationDataset` converts Polars source and target columns into reusable ID sequences. `__getitem__()` returns tensors; `_encode_src()` and `_encode_tgt()` add the required boundary tokens.
-- `collate_fn()` dynamically pads a batch and returns source lengths for LSTM packing.
-- `LengthBucketBatchSampler` shuffles deterministically per epoch, sorts within temporary buckets, and yields compact batches.
+- `TranslationPipeline.set_languages()` validates an interactive language pair.
+- `TranslationPipeline.translate_text()` tokenizes, generates, and decodes one
+  input.
+- `TranslationPipeline.run_translation()` owns the CLI loop and `/exit` handling.
 
-## Pipeline: `utils/pipelines.py`
+### `src/finetuning.py`
 
-- `TrainingPipeline.__init__()` reads the CSV and runs split, vocabulary, dataset, and loader construction in order.
-- `_create_splits_()` validates ratios, shuffles once with the seed, and creates non-overlapping train/validation/test frames.
-- `_create_dataset_()` builds the three encoded datasets with shared training vocabularies.
-- `_create_loaders_()` connects padding and length bucketing to PyTorch `DataLoader` instances.
-- `train()` selects the device, builds the configured model/optimizer/loss, trains epochs, checkpoints, early-stops, reloads the best weights, evaluates the test set, and saves all artifacts.
+- `FineTuningPipeline` loads the standardized multilingual corpus.
+- It optionally switches source and target fields.
+- It resolves every distinct corpus language before starting shared training.
 
-## Training and evaluation
+### `src/adaptation.py`
 
-- `utils/training.py: train_one_epoch()` shifts target tokens into decoder inputs/targets, runs backpropagation, clips gradients, updates weights, and returns token-normalized loss and perplexity.
-- `utils/evaluation.py: evaluate_loss()` performs the same loss calculation without gradients.
-- `utils/evaluation.py: evaluate_bleu()` greedily translates every test batch, reconstructs reference strings, and computes corpus BLEU with SacreBLEU.
+- `AdaptationPipeline` validates one new language name/code.
+- It requires the new language on exactly one side of every corpus row.
+- It adds the new token, resizes token embeddings, and starts shared training.
 
-## Inference: `utils/inference.py`
+### `src/utils.py`
 
-- `translate_from_results()` validates the run name, loads its saved configuration/vocabularies/best weights, reconstructs `Seq2Seq`, and calls sentence translation.
-- `translate_sentence()` tokenizes one configured string and performs greedy autoregressive decoding.
-- `translate_batch()` performs the same greedy process for evaluation batches while tracking completed rows.
+- Configuration, device, model-version, and language resolvers.
+- Four-column CSV loading and source/target switching.
+- Deterministic train/validation/test splitting.
+- `TranslationDataset` for lazy multilingual tokenization.
+- `Seq2SeqTrainingArguments` and `Seq2SeqTrainer` construction.
+- Output preparation, checkpoint resume handling, and artifact saving.
+- Target-aware test generation with spBLEU and chrF++ metrics.
 
-## Artifact helpers: `utils/helpers.py`
+Shared code belongs here only when more than one pipeline uses it. Pipeline-specific
+validation stays in its pipeline module so each flow remains easy to trace.
 
-- `load_json()` reads saved run metadata or vocabularies.
-- `resolve_device()` implements validated `auto`, `cuda`, `mps`, and `cpu` selection.
-- `save_vocabs()` writes both directions of the source and target vocabularies.
-- `save_results()` writes training history, test metrics, and the effective configuration.
+## Corpus contract
 
-## Configuration reference
+Fine-tuning and adaptation use one UTF-8 CSV layout:
 
-- `device`: `auto`, `cuda`, `mps`, or `cpu`.
-- `data`: CSV path/column names, split ratios, vocabulary minimum frequency, sequence length, and lowercasing.
-- `model`: embedding/hidden dimensions, bidirectional and peeky flags, and dropout.
-- `training`: result run name, loader settings, epochs, optimizer, learning rate, patience, gradient clipping, and seed.
-- `translation`: saved run name, input text, lowercasing, and decoding limit.
+```csv
+source_sentence,target_sentence,src_lang,tgt_lang
+Maayong buntag.,Magandang umaga.,cebuano,tagalog
+Naimbag a bigat.,Magandang umaga.,ilocano,tagalog
+```
 
-`training.name` chooses the output directory. `translation.model_name` chooses the run to load; set both to the same value to translate with the latest configured run.
+Sentence and language cells must contain non-blank text. The language columns can
+mix multiple pairs in one file. Fine-tuning accepts only configured and supported
+languages; adaptation accepts one configured new language and one known language
+per row.
 
-## Maintenance path
+## Configuration ownership
 
-For a new model family, add its model module first, then connect model construction in the training and inference paths together so saved configurations remain sufficient to reconstruct it. Do not change preprocessing, result ownership, or the two-command CLI unless the new architecture requires different data.
+- `model` selects the original checkpoint or a version below `models/`.
+- `languages` maps user-facing names to model language codes.
+- `generation` controls maximum generation length and beam count.
+- `data` controls split proportions and tokenizer maximum length.
+- `fine_tuning` and `adaptation` own their corpus, run name, and direction switch.
+- `training` owns Trainer hyperparameters. Gradient accumulation is intentionally
+  absent.
+
+## Tests
+
+Tests mirror the source layout:
+
+- `testing/test_preloading.py`
+- `testing/test_translation.py`
+- `testing/test_finetuning.py`
+- `testing/test_adaptation.py`
+- `testing/test_utils.py`
+
+`testing/conftest.py` contains the shared configuration and small tokenizer/model
+fakes. The tests use pytest and never download the NLLB checkpoint or start real
+training.
+
+Run all tests with:
+
+```bash
+python -m pytest -q
+```

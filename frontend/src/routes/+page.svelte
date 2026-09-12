@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { fetchCorpusSamples, fetchHealth, fetchModels, translateText } from '$lib/api.js';
+  import { fetchCorpusSamples, fetchModels, translateText } from '$lib/api.js';
   import ModelPicker from '$lib/components/ModelPicker.svelte';
   import TranslateBox from '$lib/components/TranslateBox.svelte';
   import ResultCard from '$lib/components/ResultCard.svelte';
@@ -21,15 +21,10 @@
   let corpusMessage = 'Loading local demo corpus...';
 
   onMount(async () => {
-    const [healthResult, modelsResult, samplesResult] = await Promise.allSettled([
-      fetchHealth(),
+    const [modelsResult, samplesResult] = await Promise.allSettled([
       fetchModels(),
       fetchCorpusSamples()
     ]);
-
-    if (healthResult.status === 'fulfilled') {
-      // Local interface mode does not require a backend service.
-    }
 
     if (modelsResult.status === 'fulfilled') {
       models = modelsResult.value;
@@ -87,27 +82,25 @@
 </svelte:head>
 
 <main class="page">
-  <section class="hero">
-    <div class="hero__copy">
-      <p class="hero__eyebrow">SalinWika</p>
-      <h1>
-        Cebuano to<br />
-        Tagalog<br />
-        translation.
-      </h1>
-      <p class="hero__tagline">
-        Paste Cebuano text, pick a local demo model, and translate directly in the UI.
-      </p>
+  <header class="masthead">
+    <div>
+      <p class="masthead__brand">SalinWika</p>
+      <h1>Cebuano to Tagalog</h1>
     </div>
+    <p class="masthead__description">A local translation demo built from the project corpus.</p>
+  </header>
 
-  </section>
-
-  <section class="quick-actions">
-    <span class="quick-actions__label">Corpus input</span>
-    <p class="quick-actions__message">{corpusMessage}</p>
-    <div class="quick-actions__buttons">
+  <section class="examples" aria-labelledby="examples-heading">
+    <div class="examples__heading">
+      <div>
+        <p class="examples__label">Corpus examples</p>
+        <h2 id="examples-heading">Choose text to translate</h2>
+      </div>
+      <p class="examples__message">{corpusMessage}</p>
+    </div>
+    <div class="examples__buttons">
       {#each samples as sample}
-        <button class="quick-actions__button" on:click={() => useSample(sample)}>{sample}</button>
+        <button class="examples__button" type="button" on:click={() => useSample(sample)}>{sample}</button>
       {/each}
     </div>
   </section>
@@ -117,7 +110,7 @@
   {/if}
 
   {#if models.length}
-    <div class="page__controls">
+    <div class="page__model">
       <ModelPicker {models} bind:selected={selectedModel} />
     </div>
   {:else}
@@ -125,7 +118,7 @@
   {/if}
 
   <section class="panels">
-    <TranslateBox bind:value={inputText} {loading} on:translate={handleTranslate} />
+    <TranslateBox bind:value={inputText} {loading} ready={canTranslate} on:translate={handleTranslate} />
     <div class="panels__divider" aria-hidden="true"></div>
     <ResultCard text={outputText} {loading} {error} />
   </section>
@@ -133,96 +126,96 @@
 
 <style>
   .page {
-    max-width: 1180px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 4rem 1.5rem 4.5rem;
+    padding: 2.25rem 1.5rem 3.5rem;
   }
 
-  .hero {
-    display: block;
-    width: 100%;
-    margin-bottom: 1.25rem;
+  .masthead {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 0 0 1.5rem;
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .hero__copy,
-  .quick-actions {
-    width: 100%;
-    background: rgba(17, 21, 28, 0.52);
-    border: 1px solid rgba(42, 53, 65, 0.95);
-    backdrop-filter: blur(14px);
-    border-radius: 24px;
-    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.22);
-    box-sizing: border-box;
-  }
-
-  .hero__copy {
-    padding: 1.5rem;
-  }
-
-  .hero__eyebrow,
-  .quick-actions__label {
+  .masthead__brand,
+  .examples__label {
+    margin: 0;
     font-family: var(--font-mono);
     font-size: 0.72rem;
-    letter-spacing: 0.12em;
+    letter-spacing: 0;
     text-transform: uppercase;
     color: var(--color-accent-teal);
   }
 
-  .hero__copy h1 {
-    margin: 0.45rem 0 0;
+  .masthead h1 {
+    margin: 0.35rem 0 0;
     font-family: var(--font-display);
-    font-size: clamp(4.2rem, 7.2vw, 9rem);
-    line-height: 0.8;
-    letter-spacing: -0.06em;
-    max-width: 6.2ch;
+    font-size: clamp(2.4rem, 5vw, 4.5rem);
+    line-height: 1;
+    letter-spacing: 0;
     color: #f4f5f5;
   }
 
-  .hero__tagline {
-    margin: 1.2rem 0 0;
-    max-width: 48ch;
+  .masthead__description {
+    max-width: 31ch;
+    margin: 0;
     color: var(--color-text-muted);
-    line-height: 1.7;
-    font-size: 1.05rem;
+    line-height: 1.5;
   }
 
-  .quick-actions {
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem;
+  .examples {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .quick-actions__message {
-    margin: 0.4rem 0 0;
+  .examples__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1.5rem;
+  }
+
+  .examples h2 {
+    margin: 0.3rem 0 0;
+    font-size: 1.15rem;
+  }
+
+  .examples__message {
+    max-width: 36ch;
+    margin: 0;
     color: var(--color-text-muted);
-    line-height: 1.6;
+    font-size: 0.9rem;
+    text-align: right;
   }
 
-  .quick-actions__buttons {
+  .examples__buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
     margin-top: 0.75rem;
   }
 
-  .quick-actions__button {
-    border: 1px solid rgba(74, 155, 142, 0.3);
-    background: rgba(26, 34, 44, 0.92);
+  .examples__button {
+    border: 1px solid var(--color-border);
+    background: transparent;
     color: var(--color-text);
-    border-radius: 999px;
+    border-radius: 4px;
     padding: 0.58rem 0.9rem;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
 
-  .quick-actions__button:hover {
-    transform: translateY(-1px);
-    border-color: rgba(212, 162, 76, 0.55);
+  .examples__button:hover {
+    background: var(--color-surface-raised);
+    border-color: var(--color-accent-teal);
   }
 
-  .page__controls {
+  .page__model {
     width: 100%;
-    margin-bottom: 1.5rem;
-    max-width: 100%;
+    margin: 1.5rem 0;
   }
 
   .page__error {
@@ -251,8 +244,19 @@
   }
 
   @media (max-width: 720px) {
-    .hero {
-      grid-template-columns: 1fr;
+    .page {
+      padding: 1.5rem 1rem 2.5rem;
+    }
+
+    .masthead,
+    .examples__heading {
+      align-items: start;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .examples__message {
+      text-align: left;
     }
 
     .panels {

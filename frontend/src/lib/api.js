@@ -43,7 +43,11 @@ export async function translateText(modelName, text) {
     throw new Error('Please enter some Cebuano text to translate.');
   }
 
-  const translated = DEMO_TRANSLATIONS.get(normalized.toLowerCase()) ?? `Demo translation: ${normalized}`;
+  const translated = DEMO_TRANSLATIONS.get(normalized.toLowerCase());
+
+  if (!translated) {
+    throw new Error('This local demo can translate the provided corpus examples only. Choose an example above to try it.');
+  }
 
   return {
     model_name: modelName,

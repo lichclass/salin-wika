@@ -146,6 +146,7 @@ Apple MPS is available only to local macOS Python, not inside the Linux
 container.
 
 See [Architecture](docs/ARCHITECTURE.md), [Code Guide](docs/CODE_GUIDE.md), the
+[Frontend Guide](docs/FRONTEND_GUIDE.md), the
 [NLLB documentation](https://huggingface.co/docs/transformers/model_doc/nllb),
 and the
 [official model card](https://huggingface.co/facebook/nllb-200-distilled-600M).

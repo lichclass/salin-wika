@@ -7,12 +7,12 @@
   export let error = '';
 </script>
 
-<div class="result">
+<section class="result" aria-labelledby="result-heading">
   <div class="result__header">
-    <span class="result__eyebrow">Target</span>
+    <span id="result-heading" class="result__eyebrow">Target</span>
     <span class="result__hint">Tagalog output</span>
   </div>
-  <div class="result__body">
+  <div class="result__body" aria-live="polite">
     {#if loading}
       <p class="result__status">Running translation...</p>
     {:else if error}
@@ -23,7 +23,7 @@
       <p class="result__status">Your translation will appear here.</p>
     {/if}
   </div>
-</div>
+</section>
 
 <style>
   .result {
@@ -35,8 +35,7 @@
     padding: 1rem;
     background: rgba(26, 34, 44, 0.92);
     border: 1px solid var(--color-border);
-    border-radius: 20px;
-    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.22);
+    border-radius: 6px;
     min-height: 100%;
     box-sizing: border-box;
   }
@@ -63,9 +62,9 @@
 
   .result__body {
     flex: 1;
-    background: linear-gradient(180deg, rgba(33, 43, 55, 0.98), rgba(26, 34, 44, 0.98));
+    background: var(--color-surface-raised);
     border: 1px solid var(--color-border);
-    border-radius: 16px;
+    border-radius: 4px;
     padding: 0.9rem;
     min-height: 14rem;
     height: 100%;

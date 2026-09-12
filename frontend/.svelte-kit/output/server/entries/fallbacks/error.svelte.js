@@ -1,10 +1,11 @@
-import { g as getContext, c as create_ssr_component, s as subscribe, e as escape } from "../../chunks/ssr.js";
-import "@sveltejs/kit/internal";
+import { n as noop, g as getContext, e as escape_html } from "../../chunks/index.js";
+import "clsx";
 import "../../chunks/exports.js";
-import "../../chunks/utils2.js";
 import "@sveltejs/kit/internal/server";
-import { o as onMount } from "../../chunks/ssr2.js";
-const is_legacy = onMount.toString().includes("$$") || /function \w+\(\) \{\}/.test(onMount.toString());
+import "../../chunks/root.js";
+import "@sveltejs/kit/internal";
+import "../../chunks/utils2.js";
+const is_legacy = noop.toString().includes("$$") || /function \w+\(\) \{\}/.test(noop.toString());
 const placeholder_url = "a:";
 if (is_legacy) {
   ({
@@ -18,33 +19,23 @@ if (is_legacy) {
     url: new URL(placeholder_url)
   });
 }
-const getStores = () => {
-  const stores = getContext("__svelte__");
-  return {
-    /** @type {typeof page} */
-    page: {
-      subscribe: stores.page.subscribe
-    },
-    /** @type {typeof navigating} */
-    navigating: {
-      subscribe: stores.navigating.subscribe
-    },
-    /** @type {typeof updated} */
-    updated: stores.updated
-  };
-};
-const page = {
-  subscribe(fn) {
-    const store = getStores().page;
-    return store.subscribe(fn);
+function context() {
+  return getContext("__request__");
+}
+const page$1 = {
+  get error() {
+    return context().page.error;
+  },
+  get status() {
+    return context().page.status;
   }
 };
-const Error$1 = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let $page, $$unsubscribe_page;
-  $$unsubscribe_page = subscribe(page, (value) => $page = value);
-  $$unsubscribe_page();
-  return `<h1>${escape($page.status)}</h1> <p>${escape($page.error?.message)}</p>`;
-});
+const page = page$1;
+function Error$1($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    $$renderer2.push(`<h1>${escape_html(page.status)}</h1> <p>${escape_html(page.error?.message)}</p>`);
+  });
+}
 export {
   Error$1 as default
 };

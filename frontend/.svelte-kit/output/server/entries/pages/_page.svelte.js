@@ -1,4 +1,4 @@
-import { c as create_ssr_component, e as escape, d as each, f as add_attribute, h as createEventDispatcher, v as validate_component } from "../../chunks/ssr.js";
+import { a7 as fallback, e as escape_html, a8 as ensure_array_like, a9 as bind_props, aa as attr, ab as head } from "../../chunks/index.js";
 const DEMO_CORPUS = [
   { source_text: "Maayong buntag.", target_text: "Magandang umaga." },
   { source_text: "Asa ka paingon?", target_text: "Saan ka pupunta?" },
@@ -10,98 +10,169 @@ const DEMO_CORPUS = [
 new Map(
   DEMO_CORPUS.map(({ source_text, target_text }) => [source_text.trim().toLowerCase(), target_text])
 );
-const css$3 = {
-  code: ".picker.svelte-11x9lud.svelte-11x9lud{display:flex;width:100%;flex-direction:column;gap:0.75rem;padding:1rem;background:rgba(33, 43, 55, 0.9);border:1px solid var(--color-border);border-radius:20px;box-shadow:0 22px 50px rgba(0, 0, 0, 0.22);box-sizing:border-box}.picker__label.svelte-11x9lud.svelte-11x9lud{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-text-muted)}.picker__header.svelte-11x9lud.svelte-11x9lud{display:flex;justify-content:space-between;gap:1rem;align-items:start}.picker__header.svelte-11x9lud h2.svelte-11x9lud{margin:0.25rem 0 0;font-size:1.05rem;letter-spacing:-0.01em}.picker__summary.svelte-11x9lud.svelte-11x9lud{display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:flex-end}.picker__summary.svelte-11x9lud span.svelte-11x9lud{padding:0.3rem 0.55rem;border-radius:999px;background:rgba(212, 162, 76, 0.12);border:1px solid rgba(212, 162, 76, 0.22);color:var(--color-accent-gold);font-size:0.78rem;white-space:nowrap}.picker__select.svelte-11x9lud.svelte-11x9lud{width:100%;background:var(--color-surface-raised);color:var(--color-text);border:1px solid var(--color-border);border-radius:14px;padding:0.5rem 0.75rem;font-size:0.95rem;box-sizing:border-box}.picker__details.svelte-11x9lud.svelte-11x9lud{margin:0;color:rgba(211, 221, 231, 0.7);font-size:0.72rem;line-height:1.5;font-style:italic}",
-  map: `{"version":3,"file":"ModelPicker.svelte","sources":["ModelPicker.svelte"],"sourcesContent":["<script>\\n  /** @type {Array<{name: string, bidirectional: boolean, peeky: boolean, bleu: number|null}>} */\\n  export let models = [];\\n  /** @type {string} */\\n  export let selected = '';\\n\\n  $: selectedModel = models.find((model) => model.name === selected) ?? null;\\n<\/script>\\n\\n<section class=\\"picker\\">\\n  <div class=\\"picker__header\\">\\n    <div>\\n      <span class=\\"picker__label\\">Modelo</span>\\n      <h2>Available runs</h2>\\n    </div>\\n    {#if selectedModel}\\n      <div class=\\"picker__summary\\">\\n        {#if selectedModel.bidirectional}\\n          <span>Bidirectional</span>\\n        {/if}\\n        {#if selectedModel.peeky}\\n          <span>Peeky decoder</span>\\n        {/if}\\n        {#if selectedModel.bleu != null}\\n          <span>BLEU {selectedModel.bleu.toFixed(1)}</span>\\n        {/if}\\n      </div>\\n    {/if}\\n  </div>\\n\\n  <select bind:value={selected} class=\\"picker__select\\" aria-label=\\"Select translation model\\">\\n    {#each models as model (model.name)}\\n      <option value={model.name}>\\n        {model.name}{model.bleu != null ? \` · BLEU \${model.bleu.toFixed(1)}\` : ''}\\n      </option>\\n    {/each}\\n  </select>\\n\\n  {#if selectedModel}\\n    <p class=\\"picker__details\\">\\n      {selectedModel.name} is the active run for Cebuano to Tagalog translation.\\n    </p>\\n  {/if}\\n</section>\\n\\n<style>\\n  .picker {\\n    display: flex;\\n    width: 100%;\\n    flex-direction: column;\\n    gap: 0.75rem;\\n    padding: 1rem;\\n    background: rgba(33, 43, 55, 0.9);\\n    border: 1px solid var(--color-border);\\n    border-radius: 20px;\\n    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.22);\\n    box-sizing: border-box;\\n  }\\n\\n  .picker__label {\\n    font-family: var(--font-mono);\\n    font-size: 0.7rem;\\n    letter-spacing: 0.08em;\\n    text-transform: uppercase;\\n    color: var(--color-text-muted);\\n  }\\n\\n  .picker__header {\\n    display: flex;\\n    justify-content: space-between;\\n    gap: 1rem;\\n    align-items: start;\\n  }\\n\\n  .picker__header h2 {\\n    margin: 0.25rem 0 0;\\n    font-size: 1.05rem;\\n    letter-spacing: -0.01em;\\n  }\\n\\n  .picker__summary {\\n    display: flex;\\n    flex-wrap: wrap;\\n    gap: 0.4rem;\\n    justify-content: flex-end;\\n  }\\n\\n  .picker__summary span {\\n    padding: 0.3rem 0.55rem;\\n    border-radius: 999px;\\n    background: rgba(212, 162, 76, 0.12);\\n    border: 1px solid rgba(212, 162, 76, 0.22);\\n    color: var(--color-accent-gold);\\n    font-size: 0.78rem;\\n    white-space: nowrap;\\n  }\\n\\n  .picker__select {\\n    width: 100%;\\n    background: var(--color-surface-raised);\\n    color: var(--color-text);\\n    border: 1px solid var(--color-border);\\n    border-radius: 14px;\\n    padding: 0.5rem 0.75rem;\\n    font-size: 0.95rem;\\n    box-sizing: border-box;\\n  }\\n\\n  .picker__details {\\n    margin: 0;\\n    color: rgba(211, 221, 231, 0.7);\\n    font-size: 0.72rem;\\n    line-height: 1.5;\\n    font-style: italic;\\n  }\\n</style>\\n"],"names":[],"mappings":"AA8CE,qCAAQ,CACN,OAAO,CAAE,IAAI,CACb,KAAK,CAAE,IAAI,CACX,cAAc,CAAE,MAAM,CACtB,GAAG,CAAE,OAAO,CACZ,OAAO,CAAE,IAAI,CACb,UAAU,CAAE,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,GAAG,CAAC,CACjC,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,cAAc,CAAC,CACrC,aAAa,CAAE,IAAI,CACnB,UAAU,CAAE,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAC3C,UAAU,CAAE,UACd,CAEA,4CAAe,CACb,WAAW,CAAE,IAAI,WAAW,CAAC,CAC7B,SAAS,CAAE,MAAM,CACjB,cAAc,CAAE,MAAM,CACtB,cAAc,CAAE,SAAS,CACzB,KAAK,CAAE,IAAI,kBAAkB,CAC/B,CAEA,6CAAgB,CACd,OAAO,CAAE,IAAI,CACb,eAAe,CAAE,aAAa,CAC9B,GAAG,CAAE,IAAI,CACT,WAAW,CAAE,KACf,CAEA,8BAAe,CAAC,iBAAG,CACjB,MAAM,CAAE,OAAO,CAAC,CAAC,CAAC,CAAC,CACnB,SAAS,CAAE,OAAO,CAClB,cAAc,CAAE,OAClB,CAEA,8CAAiB,CACf,OAAO,CAAE,IAAI,CACb,SAAS,CAAE,IAAI,CACf,GAAG,CAAE,MAAM,CACX,eAAe,CAAE,QACnB,CAEA,+BAAgB,CAAC,mBAAK,CACpB,OAAO,CAAE,MAAM,CAAC,OAAO,CACvB,aAAa,CAAE,KAAK,CACpB,UAAU,CAAE,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CACpC,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAC1C,KAAK,CAAE,IAAI,mBAAmB,CAAC,CAC/B,SAAS,CAAE,OAAO,CAClB,WAAW,CAAE,MACf,CAEA,6CAAgB,CACd,KAAK,CAAE,IAAI,CACX,UAAU,CAAE,IAAI,sBAAsB,CAAC,CACvC,KAAK,CAAE,IAAI,YAAY,CAAC,CACxB,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,cAAc,CAAC,CACrC,aAAa,CAAE,IAAI,CACnB,OAAO,CAAE,MAAM,CAAC,OAAO,CACvB,SAAS,CAAE,OAAO,CAClB,UAAU,CAAE,UACd,CAEA,8CAAiB,CACf,MAAM,CAAE,CAAC,CACT,KAAK,CAAE,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAC/B,SAAS,CAAE,OAAO,CAClB,WAAW,CAAE,GAAG,CAChB,UAAU,CAAE,MACd"}`
-};
-const ModelPicker = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let selectedModel;
-  let { models = [] } = $$props;
-  let { selected = "" } = $$props;
-  if ($$props.models === void 0 && $$bindings.models && models !== void 0) $$bindings.models(models);
-  if ($$props.selected === void 0 && $$bindings.selected && selected !== void 0) $$bindings.selected(selected);
-  $$result.css.add(css$3);
-  selectedModel = models.find((model) => model.name === selected) ?? null;
-  return `<section class="picker svelte-11x9lud"><div class="picker__header svelte-11x9lud"><div data-svelte-h="svelte-15xal74"><span class="picker__label svelte-11x9lud">Modelo</span> <h2 class="svelte-11x9lud">Available runs</h2></div> ${selectedModel ? `<div class="picker__summary svelte-11x9lud">${selectedModel.bidirectional ? `<span class="svelte-11x9lud" data-svelte-h="svelte-1f61scb">Bidirectional</span>` : ``} ${selectedModel.peeky ? `<span class="svelte-11x9lud" data-svelte-h="svelte-1t3472w">Peeky decoder</span>` : ``} ${selectedModel.bleu != null ? `<span class="svelte-11x9lud">BLEU ${escape(selectedModel.bleu.toFixed(1))}</span>` : ``}</div>` : ``}</div> <select class="picker__select svelte-11x9lud" aria-label="Select translation model">${each(models, (model) => {
-    return `<option${add_attribute("value", model.name, 0)}>${escape(model.name)}${escape(model.bleu != null ? ` · BLEU ${model.bleu.toFixed(1)}` : "")} </option>`;
-  })}</select> ${selectedModel ? `<p class="picker__details svelte-11x9lud">${escape(selectedModel.name)} is the active run for Cebuano to Tagalog translation.</p>` : ``} </section>`;
-});
-const css$2 = {
-  code: ".box.svelte-18mbkus{display:flex;flex:1 1 auto;width:100%;flex-direction:column;gap:0.75rem;padding:1rem;background:rgba(26, 34, 44, 0.92);border:1px solid var(--color-border);border-radius:20px;box-shadow:0 22px 50px rgba(0, 0, 0, 0.22);min-height:100%;box-sizing:border-box}.box__header.svelte-18mbkus{display:flex;justify-content:space-between;align-items:baseline;gap:0.75rem}.box__eyebrow.svelte-18mbkus{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-teal)}.box__hint.svelte-18mbkus{color:var(--color-text-muted);font-size:0.85rem}textarea.svelte-18mbkus{flex:1;background:linear-gradient(180deg, rgba(33, 43, 55, 0.98), rgba(26, 34, 44, 0.98));color:var(--color-text);border:1px solid var(--color-border);border-radius:16px;padding:0.9rem;font-size:1rem;line-height:1.5;resize:vertical;min-height:14rem;height:100%}.box__submit.svelte-18mbkus{align-self:flex-start;background:var(--color-accent-gold);color:#1a140a;border:none;border-radius:999px;padding:0.72rem 1.35rem;font-weight:600;font-size:0.95rem;cursor:pointer;transition:transform 0.15s ease, opacity 0.15s ease}.box__submit.svelte-18mbkus:disabled{opacity:0.5;cursor:not-allowed}.box__submit.svelte-18mbkus:not(:disabled):hover{transform:translateY(-1px)}",
-  map: `{"version":3,"file":"TranslateBox.svelte","sources":["TranslateBox.svelte"],"sourcesContent":["<script>\\n  import { createEventDispatcher } from 'svelte';\\n\\n  /** @type {string} */\\n  export let value = '';\\n  /** @type {boolean} */\\n  export let loading = false;\\n\\n  const dispatch = createEventDispatcher();\\n\\n  function submit() {\\n    if (!value.trim() || loading) return;\\n    dispatch('translate', value.trim());\\n  }\\n\\n  /** @param {KeyboardEvent} event */\\n  function onKeydown(event) {\\n    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') submit();\\n  }\\n<\/script>\\n\\n<div class=\\"box\\">\\n  <div class=\\"box__header\\">\\n    <span class=\\"box__eyebrow\\">Source</span>\\n    <span class=\\"box__hint\\">Cebuano input</span>\\n  </div>\\n  <textarea\\n    bind:value\\n    on:keydown={onKeydown}\\n    placeholder=\\"I-type ang Cebuano sentence here...\\"\\n    rows=\\"8\\"\\n  ></textarea>\\n  <button class=\\"box__submit\\" on:click={submit} disabled={loading || !value.trim()}>\\n    {loading ? 'Translating…' : 'Translate to Tagalog'}\\n  </button>\\n</div>\\n\\n<style>\\n  .box {\\n    display: flex;\\n    flex: 1 1 auto;\\n    width: 100%;\\n    flex-direction: column;\\n    gap: 0.75rem;\\n    padding: 1rem;\\n    background: rgba(26, 34, 44, 0.92);\\n    border: 1px solid var(--color-border);\\n    border-radius: 20px;\\n    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.22);\\n    min-height: 100%;\\n    box-sizing: border-box;\\n  }\\n\\n  .box__header {\\n    display: flex;\\n    justify-content: space-between;\\n    align-items: baseline;\\n    gap: 0.75rem;\\n  }\\n\\n  .box__eyebrow {\\n    font-family: var(--font-mono);\\n    font-size: 0.7rem;\\n    letter-spacing: 0.08em;\\n    text-transform: uppercase;\\n    color: var(--color-accent-teal);\\n  }\\n\\n  .box__hint {\\n    color: var(--color-text-muted);\\n    font-size: 0.85rem;\\n  }\\n\\n  textarea {\\n    flex: 1;\\n    background: linear-gradient(180deg, rgba(33, 43, 55, 0.98), rgba(26, 34, 44, 0.98));\\n    color: var(--color-text);\\n    border: 1px solid var(--color-border);\\n    border-radius: 16px;\\n    padding: 0.9rem;\\n    font-size: 1rem;\\n    line-height: 1.5;\\n    resize: vertical;\\n    min-height: 14rem;\\n    height: 100%;\\n  }\\n\\n  .box__submit {\\n    align-self: flex-start;\\n    background: var(--color-accent-gold);\\n    color: #1a140a;\\n    border: none;\\n    border-radius: 999px;\\n    padding: 0.72rem 1.35rem;\\n    font-weight: 600;\\n    font-size: 0.95rem;\\n    cursor: pointer;\\n    transition: transform 0.15s ease, opacity 0.15s ease;\\n  }\\n\\n  .box__submit:disabled {\\n    opacity: 0.5;\\n    cursor: not-allowed;\\n  }\\n\\n  .box__submit:not(:disabled):hover {\\n    transform: translateY(-1px);\\n  }\\n</style>\\n"],"names":[],"mappings":"AAsCE,mBAAK,CACH,OAAO,CAAE,IAAI,CACb,IAAI,CAAE,CAAC,CAAC,CAAC,CAAC,IAAI,CACd,KAAK,CAAE,IAAI,CACX,cAAc,CAAE,MAAM,CACtB,GAAG,CAAE,OAAO,CACZ,OAAO,CAAE,IAAI,CACb,UAAU,CAAE,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAClC,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,cAAc,CAAC,CACrC,aAAa,CAAE,IAAI,CACnB,UAAU,CAAE,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAC3C,UAAU,CAAE,IAAI,CAChB,UAAU,CAAE,UACd,CAEA,2BAAa,CACX,OAAO,CAAE,IAAI,CACb,eAAe,CAAE,aAAa,CAC9B,WAAW,CAAE,QAAQ,CACrB,GAAG,CAAE,OACP,CAEA,4BAAc,CACZ,WAAW,CAAE,IAAI,WAAW,CAAC,CAC7B,SAAS,CAAE,MAAM,CACjB,cAAc,CAAE,MAAM,CACtB,cAAc,CAAE,SAAS,CACzB,KAAK,CAAE,IAAI,mBAAmB,CAChC,CAEA,yBAAW,CACT,KAAK,CAAE,IAAI,kBAAkB,CAAC,CAC9B,SAAS,CAAE,OACb,CAEA,uBAAS,CACP,IAAI,CAAE,CAAC,CACP,UAAU,CAAE,gBAAgB,MAAM,CAAC,CAAC,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAAC,CAAC,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAAC,CACnF,KAAK,CAAE,IAAI,YAAY,CAAC,CACxB,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,cAAc,CAAC,CACrC,aAAa,CAAE,IAAI,CACnB,OAAO,CAAE,MAAM,CACf,SAAS,CAAE,IAAI,CACf,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,QAAQ,CAChB,UAAU,CAAE,KAAK,CACjB,MAAM,CAAE,IACV,CAEA,2BAAa,CACX,UAAU,CAAE,UAAU,CACtB,UAAU,CAAE,IAAI,mBAAmB,CAAC,CACpC,KAAK,CAAE,OAAO,CACd,MAAM,CAAE,IAAI,CACZ,aAAa,CAAE,KAAK,CACpB,OAAO,CAAE,OAAO,CAAC,OAAO,CACxB,WAAW,CAAE,GAAG,CAChB,SAAS,CAAE,OAAO,CAClB,MAAM,CAAE,OAAO,CACf,UAAU,CAAE,SAAS,CAAC,KAAK,CAAC,IAAI,CAAC,CAAC,OAAO,CAAC,KAAK,CAAC,IAClD,CAEA,2BAAY,SAAU,CACpB,OAAO,CAAE,GAAG,CACZ,MAAM,CAAE,WACV,CAEA,2BAAY,KAAK,SAAS,CAAC,MAAO,CAChC,SAAS,CAAE,WAAW,IAAI,CAC5B"}`
-};
-const TranslateBox = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let { value = "" } = $$props;
-  let { loading = false } = $$props;
-  createEventDispatcher();
-  if ($$props.value === void 0 && $$bindings.value && value !== void 0) $$bindings.value(value);
-  if ($$props.loading === void 0 && $$bindings.loading && loading !== void 0) $$bindings.loading(loading);
-  $$result.css.add(css$2);
-  return `<div class="box svelte-18mbkus"><div class="box__header svelte-18mbkus" data-svelte-h="svelte-v81z47"><span class="box__eyebrow svelte-18mbkus">Source</span> <span class="box__hint svelte-18mbkus">Cebuano input</span></div> <textarea placeholder="I-type ang Cebuano sentence here..." rows="8" class="svelte-18mbkus">${escape(value || "")}</textarea> <button class="box__submit svelte-18mbkus" ${loading || !value.trim() ? "disabled" : ""}>${escape(loading ? "Translating…" : "Translate to Tagalog")}</button> </div>`;
-});
-const css$1 = {
-  code: ".result.svelte-1a0ypkw{display:flex;flex:1 1 auto;width:100%;flex-direction:column;gap:0.75rem;padding:1rem;background:rgba(26, 34, 44, 0.92);border:1px solid var(--color-border);border-radius:20px;box-shadow:0 22px 50px rgba(0, 0, 0, 0.22);min-height:100%;box-sizing:border-box}.result__header.svelte-1a0ypkw{display:flex;justify-content:space-between;align-items:baseline;gap:0.75rem}.result__eyebrow.svelte-1a0ypkw{font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-gold)}.result__hint.svelte-1a0ypkw{color:var(--color-text-muted);font-size:0.85rem}.result__body.svelte-1a0ypkw{flex:1;background:linear-gradient(180deg, rgba(33, 43, 55, 0.98), rgba(26, 34, 44, 0.98));border:1px solid var(--color-border);border-radius:16px;padding:0.9rem;min-height:14rem;height:100%;font-size:1rem;line-height:1.6;white-space:pre-wrap}.result__status.svelte-1a0ypkw{color:var(--color-text-muted);font-style:italic}.result__error.svelte-1a0ypkw{color:var(--color-error)}",
-  map: `{"version":3,"file":"ResultCard.svelte","sources":["ResultCard.svelte"],"sourcesContent":["<script>\\n  /** @type {string} */\\n  export let text = '';\\n  /** @type {boolean} */\\n  export let loading = false;\\n  /** @type {string} */\\n  export let error = '';\\n<\/script>\\n\\n<div class=\\"result\\">\\n  <div class=\\"result__header\\">\\n    <span class=\\"result__eyebrow\\">Target</span>\\n    <span class=\\"result__hint\\">Tagalog output</span>\\n  </div>\\n  <div class=\\"result__body\\">\\n    {#if loading}\\n      <p class=\\"result__status\\">Running translation...</p>\\n    {:else if error}\\n      <p class=\\"result__error\\">{error}</p>\\n    {:else if text}\\n      <p>{text}</p>\\n    {:else}\\n      <p class=\\"result__status\\">Your translation will appear here.</p>\\n    {/if}\\n  </div>\\n</div>\\n\\n<style>\\n  .result {\\n    display: flex;\\n    flex: 1 1 auto;\\n    width: 100%;\\n    flex-direction: column;\\n    gap: 0.75rem;\\n    padding: 1rem;\\n    background: rgba(26, 34, 44, 0.92);\\n    border: 1px solid var(--color-border);\\n    border-radius: 20px;\\n    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.22);\\n    min-height: 100%;\\n    box-sizing: border-box;\\n  }\\n\\n  .result__header {\\n    display: flex;\\n    justify-content: space-between;\\n    align-items: baseline;\\n    gap: 0.75rem;\\n  }\\n\\n  .result__eyebrow {\\n    font-family: var(--font-mono);\\n    font-size: 0.7rem;\\n    letter-spacing: 0.08em;\\n    text-transform: uppercase;\\n    color: var(--color-accent-gold);\\n  }\\n\\n  .result__hint {\\n    color: var(--color-text-muted);\\n    font-size: 0.85rem;\\n  }\\n\\n  .result__body {\\n    flex: 1;\\n    background: linear-gradient(180deg, rgba(33, 43, 55, 0.98), rgba(26, 34, 44, 0.98));\\n    border: 1px solid var(--color-border);\\n    border-radius: 16px;\\n    padding: 0.9rem;\\n    min-height: 14rem;\\n    height: 100%;\\n    font-size: 1rem;\\n    line-height: 1.6;\\n    white-space: pre-wrap;\\n  }\\n\\n  .result__status {\\n    color: var(--color-text-muted);\\n    font-style: italic;\\n  }\\n\\n  .result__error {\\n    color: var(--color-error);\\n  }\\n</style>\\n"],"names":[],"mappings":"AA4BE,sBAAQ,CACN,OAAO,CAAE,IAAI,CACb,IAAI,CAAE,CAAC,CAAC,CAAC,CAAC,IAAI,CACd,KAAK,CAAE,IAAI,CACX,cAAc,CAAE,MAAM,CACtB,GAAG,CAAE,OAAO,CACZ,OAAO,CAAE,IAAI,CACb,UAAU,CAAE,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAClC,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,cAAc,CAAC,CACrC,aAAa,CAAE,IAAI,CACnB,UAAU,CAAE,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAC3C,UAAU,CAAE,IAAI,CAChB,UAAU,CAAE,UACd,CAEA,8BAAgB,CACd,OAAO,CAAE,IAAI,CACb,eAAe,CAAE,aAAa,CAC9B,WAAW,CAAE,QAAQ,CACrB,GAAG,CAAE,OACP,CAEA,+BAAiB,CACf,WAAW,CAAE,IAAI,WAAW,CAAC,CAC7B,SAAS,CAAE,MAAM,CACjB,cAAc,CAAE,MAAM,CACtB,cAAc,CAAE,SAAS,CACzB,KAAK,CAAE,IAAI,mBAAmB,CAChC,CAEA,4BAAc,CACZ,KAAK,CAAE,IAAI,kBAAkB,CAAC,CAC9B,SAAS,CAAE,OACb,CAEA,4BAAc,CACZ,IAAI,CAAE,CAAC,CACP,UAAU,CAAE,gBAAgB,MAAM,CAAC,CAAC,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAAC,CAAC,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAAC,CACnF,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,cAAc,CAAC,CACrC,aAAa,CAAE,IAAI,CACnB,OAAO,CAAE,MAAM,CACf,UAAU,CAAE,KAAK,CACjB,MAAM,CAAE,IAAI,CACZ,SAAS,CAAE,IAAI,CACf,WAAW,CAAE,GAAG,CAChB,WAAW,CAAE,QACf,CAEA,8BAAgB,CACd,KAAK,CAAE,IAAI,kBAAkB,CAAC,CAC9B,UAAU,CAAE,MACd,CAEA,6BAAe,CACb,KAAK,CAAE,IAAI,aAAa,CAC1B"}`
-};
-const ResultCard = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let { text = "" } = $$props;
-  let { loading = false } = $$props;
-  let { error = "" } = $$props;
-  if ($$props.text === void 0 && $$bindings.text && text !== void 0) $$bindings.text(text);
-  if ($$props.loading === void 0 && $$bindings.loading && loading !== void 0) $$bindings.loading(loading);
-  if ($$props.error === void 0 && $$bindings.error && error !== void 0) $$bindings.error(error);
-  $$result.css.add(css$1);
-  return `<div class="result svelte-1a0ypkw"><div class="result__header svelte-1a0ypkw" data-svelte-h="svelte-15aoe8e"><span class="result__eyebrow svelte-1a0ypkw">Target</span> <span class="result__hint svelte-1a0ypkw">Tagalog output</span></div> <div class="result__body svelte-1a0ypkw">${loading ? `<p class="result__status svelte-1a0ypkw" data-svelte-h="svelte-1wm5ju2">Running translation...</p>` : `${error ? `<p class="result__error svelte-1a0ypkw">${escape(error)}</p>` : `${text ? `<p>${escape(text)}</p>` : `<p class="result__status svelte-1a0ypkw" data-svelte-h="svelte-vf4fwx">Your translation will appear here.</p>`}`}`}</div> </div>`;
-});
-const css = {
-  code: ".page.svelte-1ugfj99.svelte-1ugfj99{max-width:1180px;margin:0 auto;padding:4rem 1.5rem 4.5rem}.hero.svelte-1ugfj99.svelte-1ugfj99{display:block;width:100%;margin-bottom:1.25rem}.hero__copy.svelte-1ugfj99.svelte-1ugfj99,.quick-actions.svelte-1ugfj99.svelte-1ugfj99{width:100%;background:rgba(17, 21, 28, 0.52);border:1px solid rgba(42, 53, 65, 0.95);backdrop-filter:blur(14px);border-radius:24px;box-shadow:0 28px 80px rgba(0, 0, 0, 0.22);box-sizing:border-box}.hero__copy.svelte-1ugfj99.svelte-1ugfj99{padding:1.5rem}.hero__eyebrow.svelte-1ugfj99.svelte-1ugfj99,.quick-actions__label.svelte-1ugfj99.svelte-1ugfj99{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-teal)}.hero__copy.svelte-1ugfj99 h1.svelte-1ugfj99{margin:0.45rem 0 0;font-family:var(--font-display);font-size:clamp(4.2rem, 7.2vw, 9rem);line-height:0.8;letter-spacing:-0.06em;max-width:6.2ch;color:#f4f5f5}.hero__tagline.svelte-1ugfj99.svelte-1ugfj99{margin:1.2rem 0 0;max-width:48ch;color:var(--color-text-muted);line-height:1.7;font-size:1.05rem}.quick-actions.svelte-1ugfj99.svelte-1ugfj99{padding:1rem 1.25rem;margin-bottom:1.25rem}.quick-actions__message.svelte-1ugfj99.svelte-1ugfj99{margin:0.4rem 0 0;color:var(--color-text-muted);line-height:1.6}.quick-actions__buttons.svelte-1ugfj99.svelte-1ugfj99{display:flex;flex-wrap:wrap;gap:0.65rem;margin-top:0.75rem}.quick-actions__button.svelte-1ugfj99.svelte-1ugfj99{border:1px solid rgba(74, 155, 142, 0.3);background:rgba(26, 34, 44, 0.92);color:var(--color-text);border-radius:999px;padding:0.58rem 0.9rem;cursor:pointer;transition:transform 0.15s ease, border-color 0.15s ease}.quick-actions__button.svelte-1ugfj99.svelte-1ugfj99:hover{transform:translateY(-1px);border-color:rgba(212, 162, 76, 0.55)}.page__controls.svelte-1ugfj99.svelte-1ugfj99{width:100%;margin-bottom:1.5rem;max-width:100%}.page__error.svelte-1ugfj99.svelte-1ugfj99{color:var(--color-error)}.page__status.svelte-1ugfj99.svelte-1ugfj99{color:var(--color-text-muted)}.panels.svelte-1ugfj99.svelte-1ugfj99{display:grid;grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);gap:1.25rem;align-items:stretch}.panels__divider.svelte-1ugfj99.svelte-1ugfj99{align-self:stretch;width:1px;background-image:repeating-linear-gradient(\n      to bottom,\n      var(--color-accent-gold) 0 6px,\n      transparent 6px 14px\n    )}@media(max-width: 720px){.hero.svelte-1ugfj99.svelte-1ugfj99{grid-template-columns:1fr}.panels.svelte-1ugfj99.svelte-1ugfj99{grid-template-columns:1fr}.panels__divider.svelte-1ugfj99.svelte-1ugfj99{display:none}}",
-  map: `{"version":3,"file":"+page.svelte","sources":["+page.svelte"],"sourcesContent":["<script>\\n  import { onMount } from 'svelte';\\n  import { fetchCorpusSamples, fetchHealth, fetchModels, translateText } from '$lib/api.js';\\n  import ModelPicker from '$lib/components/ModelPicker.svelte';\\n  import TranslateBox from '$lib/components/TranslateBox.svelte';\\n  import ResultCard from '$lib/components/ResultCard.svelte';\\n\\n  /** @type {Array<{name: string, bidirectional: boolean, peeky: boolean, bleu: number|null}>} */\\n  let models = [];\\n  let selectedModel = '';\\n  let inputText = '';\\n  let outputText = '';\\n  let loading = false;\\n  let error = '';\\n  let modelsError = '';\\n  let samples = [\\n    'Maayong buntag.',\\n    'Asa ka paingon?',\\n    'Palihog tabangi ko.'\\n  ];\\n  let corpusMessage = 'Loading local demo corpus...';\\n\\n  onMount(async () => {\\n    const [healthResult, modelsResult, samplesResult] = await Promise.allSettled([\\n      fetchHealth(),\\n      fetchModels(),\\n      fetchCorpusSamples()\\n    ]);\\n\\n    if (healthResult.status === 'fulfilled') {\\n      // Local interface mode does not require a backend service.\\n    }\\n\\n    if (modelsResult.status === 'fulfilled') {\\n      models = modelsResult.value;\\n      if (models.length) selectedModel = models[0].name;\\n    } else {\\n      modelsError = modelsResult.reason instanceof Error ? modelsResult.reason.message : String(modelsResult.reason);\\n    }\\n\\n    if (samplesResult.status === 'fulfilled' && samplesResult.value.length) {\\n      samples = samplesResult.value.map((sample) => sample.source_text);\\n      corpusMessage = \`Loaded \${samplesResult.value.length} local demo corpus samples.\`;\\n    } else if (samplesResult.status === 'rejected') {\\n      corpusMessage = samplesResult.reason instanceof Error ? samplesResult.reason.message : String(samplesResult.reason);\\n    } else {\\n      corpusMessage = 'Local corpus examples are unavailable right now.';\\n    }\\n  });\\n\\n  function useSample(text) {\\n    inputText = text;\\n  }\\n\\n  $: canTranslate = models.length > 0 && !!selectedModel;\\n\\n  /** @param {CustomEvent<string>} event */\\n  async function handleTranslate(event) {\\n    const text = event.detail;\\n\\n    if (!selectedModel) {\\n      error = 'No model is available in interface mode.';\\n      return;\\n    }\\n\\n    loading = true;\\n    error = '';\\n    outputText = '';\\n\\n    try {\\n      const result = await translateText(selectedModel, text);\\n      outputText = result.translated_text;\\n    } catch (err) {\\n      error = err instanceof Error ? err.message : String(err);\\n    } finally {\\n      loading = false;\\n    }\\n  }\\n<\/script>\\n\\n<svelte:head>\\n  <title>SalinWika | Cebuano to Tagalog</title>\\n  <meta\\n    name=\\"description\\"\\n    content=\\"SalinWika is a local interface for Cebuano to Tagalog translation demos.\\"\\n  />\\n</svelte:head>\\n\\n<main class=\\"page\\">\\n  <section class=\\"hero\\">\\n    <div class=\\"hero__copy\\">\\n      <p class=\\"hero__eyebrow\\">SalinWika</p>\\n      <h1>\\n        Cebuano to<br />\\n        Tagalog<br />\\n        translation.\\n      </h1>\\n      <p class=\\"hero__tagline\\">\\n        Paste Cebuano text, pick a local demo model, and translate directly in the UI.\\n      </p>\\n    </div>\\n\\n  </section>\\n\\n  <section class=\\"quick-actions\\">\\n    <span class=\\"quick-actions__label\\">Corpus input</span>\\n    <p class=\\"quick-actions__message\\">{corpusMessage}</p>\\n    <div class=\\"quick-actions__buttons\\">\\n      {#each samples as sample}\\n        <button class=\\"quick-actions__button\\" on:click={() => useSample(sample)}>{sample}</button>\\n      {/each}\\n    </div>\\n  </section>\\n\\n  {#if modelsError}\\n    <p class=\\"page__error\\">Could not load models: {modelsError}</p>\\n  {/if}\\n\\n  {#if models.length}\\n    <div class=\\"page__controls\\">\\n      <ModelPicker {models} bind:selected={selectedModel} />\\n    </div>\\n  {:else}\\n    <p class=\\"page__status\\">No local demo model is available yet.</p>\\n  {/if}\\n\\n  <section class=\\"panels\\">\\n    <TranslateBox bind:value={inputText} {loading} on:translate={handleTranslate} />\\n    <div class=\\"panels__divider\\" aria-hidden=\\"true\\"></div>\\n    <ResultCard text={outputText} {loading} {error} />\\n  </section>\\n</main>\\n\\n<style>\\n  .page {\\n    max-width: 1180px;\\n    margin: 0 auto;\\n    padding: 4rem 1.5rem 4.5rem;\\n  }\\n\\n  .hero {\\n    display: block;\\n    width: 100%;\\n    margin-bottom: 1.25rem;\\n  }\\n\\n  .hero__copy,\\n  .quick-actions {\\n    width: 100%;\\n    background: rgba(17, 21, 28, 0.52);\\n    border: 1px solid rgba(42, 53, 65, 0.95);\\n    backdrop-filter: blur(14px);\\n    border-radius: 24px;\\n    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.22);\\n    box-sizing: border-box;\\n  }\\n\\n  .hero__copy {\\n    padding: 1.5rem;\\n  }\\n\\n  .hero__eyebrow,\\n  .quick-actions__label {\\n    font-family: var(--font-mono);\\n    font-size: 0.72rem;\\n    letter-spacing: 0.12em;\\n    text-transform: uppercase;\\n    color: var(--color-accent-teal);\\n  }\\n\\n  .hero__copy h1 {\\n    margin: 0.45rem 0 0;\\n    font-family: var(--font-display);\\n    font-size: clamp(4.2rem, 7.2vw, 9rem);\\n    line-height: 0.8;\\n    letter-spacing: -0.06em;\\n    max-width: 6.2ch;\\n    color: #f4f5f5;\\n  }\\n\\n  .hero__tagline {\\n    margin: 1.2rem 0 0;\\n    max-width: 48ch;\\n    color: var(--color-text-muted);\\n    line-height: 1.7;\\n    font-size: 1.05rem;\\n  }\\n\\n  .quick-actions {\\n    padding: 1rem 1.25rem;\\n    margin-bottom: 1.25rem;\\n  }\\n\\n  .quick-actions__message {\\n    margin: 0.4rem 0 0;\\n    color: var(--color-text-muted);\\n    line-height: 1.6;\\n  }\\n\\n  .quick-actions__buttons {\\n    display: flex;\\n    flex-wrap: wrap;\\n    gap: 0.65rem;\\n    margin-top: 0.75rem;\\n  }\\n\\n  .quick-actions__button {\\n    border: 1px solid rgba(74, 155, 142, 0.3);\\n    background: rgba(26, 34, 44, 0.92);\\n    color: var(--color-text);\\n    border-radius: 999px;\\n    padding: 0.58rem 0.9rem;\\n    cursor: pointer;\\n    transition: transform 0.15s ease, border-color 0.15s ease;\\n  }\\n\\n  .quick-actions__button:hover {\\n    transform: translateY(-1px);\\n    border-color: rgba(212, 162, 76, 0.55);\\n  }\\n\\n  .page__controls {\\n    width: 100%;\\n    margin-bottom: 1.5rem;\\n    max-width: 100%;\\n  }\\n\\n  .page__error {\\n    color: var(--color-error);\\n  }\\n\\n  .page__status {\\n    color: var(--color-text-muted);\\n  }\\n\\n  .panels {\\n    display: grid;\\n    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);\\n    gap: 1.25rem;\\n    align-items: stretch;\\n  }\\n\\n  .panels__divider {\\n    align-self: stretch;\\n    width: 1px;\\n    background-image: repeating-linear-gradient(\\n      to bottom,\\n      var(--color-accent-gold) 0 6px,\\n      transparent 6px 14px\\n    );\\n  }\\n\\n  @media (max-width: 720px) {\\n    .hero {\\n      grid-template-columns: 1fr;\\n    }\\n\\n    .panels {\\n      grid-template-columns: 1fr;\\n    }\\n\\n    .panels__divider {\\n      display: none;\\n    }\\n  }\\n</style>\\n"],"names":[],"mappings":"AAsIE,mCAAM,CACJ,SAAS,CAAE,MAAM,CACjB,MAAM,CAAE,CAAC,CAAC,IAAI,CACd,OAAO,CAAE,IAAI,CAAC,MAAM,CAAC,MACvB,CAEA,mCAAM,CACJ,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,CACX,aAAa,CAAE,OACjB,CAEA,yCAAW,CACX,4CAAe,CACb,KAAK,CAAE,IAAI,CACX,UAAU,CAAE,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAClC,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CACxC,eAAe,CAAE,KAAK,IAAI,CAAC,CAC3B,aAAa,CAAE,IAAI,CACnB,UAAU,CAAE,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAC3C,UAAU,CAAE,UACd,CAEA,yCAAY,CACV,OAAO,CAAE,MACX,CAEA,4CAAc,CACd,mDAAsB,CACpB,WAAW,CAAE,IAAI,WAAW,CAAC,CAC7B,SAAS,CAAE,OAAO,CAClB,cAAc,CAAE,MAAM,CACtB,cAAc,CAAE,SAAS,CACzB,KAAK,CAAE,IAAI,mBAAmB,CAChC,CAEA,0BAAW,CAAC,iBAAG,CACb,MAAM,CAAE,OAAO,CAAC,CAAC,CAAC,CAAC,CACnB,WAAW,CAAE,IAAI,cAAc,CAAC,CAChC,SAAS,CAAE,MAAM,MAAM,CAAC,CAAC,KAAK,CAAC,CAAC,IAAI,CAAC,CACrC,WAAW,CAAE,GAAG,CAChB,cAAc,CAAE,OAAO,CACvB,SAAS,CAAE,KAAK,CAChB,KAAK,CAAE,OACT,CAEA,4CAAe,CACb,MAAM,CAAE,MAAM,CAAC,CAAC,CAAC,CAAC,CAClB,SAAS,CAAE,IAAI,CACf,KAAK,CAAE,IAAI,kBAAkB,CAAC,CAC9B,WAAW,CAAE,GAAG,CAChB,SAAS,CAAE,OACb,CAEA,4CAAe,CACb,OAAO,CAAE,IAAI,CAAC,OAAO,CACrB,aAAa,CAAE,OACjB,CAEA,qDAAwB,CACtB,MAAM,CAAE,MAAM,CAAC,CAAC,CAAC,CAAC,CAClB,KAAK,CAAE,IAAI,kBAAkB,CAAC,CAC9B,WAAW,CAAE,GACf,CAEA,qDAAwB,CACtB,OAAO,CAAE,IAAI,CACb,SAAS,CAAE,IAAI,CACf,GAAG,CAAE,OAAO,CACZ,UAAU,CAAE,OACd,CAEA,oDAAuB,CACrB,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CACzC,UAAU,CAAE,KAAK,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CAAC,CAClC,KAAK,CAAE,IAAI,YAAY,CAAC,CACxB,aAAa,CAAE,KAAK,CACpB,OAAO,CAAE,OAAO,CAAC,MAAM,CACvB,MAAM,CAAE,OAAO,CACf,UAAU,CAAE,SAAS,CAAC,KAAK,CAAC,IAAI,CAAC,CAAC,YAAY,CAAC,KAAK,CAAC,IACvD,CAEA,oDAAsB,MAAO,CAC3B,SAAS,CAAE,WAAW,IAAI,CAAC,CAC3B,YAAY,CAAE,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,IAAI,CACvC,CAEA,6CAAgB,CACd,KAAK,CAAE,IAAI,CACX,aAAa,CAAE,MAAM,CACrB,SAAS,CAAE,IACb,CAEA,0CAAa,CACX,KAAK,CAAE,IAAI,aAAa,CAC1B,CAEA,2CAAc,CACZ,KAAK,CAAE,IAAI,kBAAkB,CAC/B,CAEA,qCAAQ,CACN,OAAO,CAAE,IAAI,CACb,qBAAqB,CAAE,OAAO,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,IAAI,CAAC,OAAO,CAAC,CAAC,CAAC,GAAG,CAAC,CACzD,GAAG,CAAE,OAAO,CACZ,WAAW,CAAE,OACf,CAEA,8CAAiB,CACf,UAAU,CAAE,OAAO,CACnB,KAAK,CAAE,GAAG,CACV,gBAAgB,CAAE;AACtB,MAAM,EAAE,CAAC,MAAM;AACf,MAAM,IAAI,mBAAmB,CAAC,CAAC,CAAC,CAAC,GAAG;AACpC,MAAM,WAAW,CAAC,GAAG,CAAC;AACtB,KACE,CAEA,MAAO,YAAY,KAAK,CAAE,CACxB,mCAAM,CACJ,qBAAqB,CAAE,GACzB,CAEA,qCAAQ,CACN,qBAAqB,CAAE,GACzB,CAEA,8CAAiB,CACf,OAAO,CAAE,IACX,CACF"}`
-};
-const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let models = [];
-  let selectedModel = "";
-  let inputText = "";
-  let outputText = "";
-  let loading = false;
-  let error = "";
-  let samples = ["Maayong buntag.", "Asa ka paingon?", "Palihog tabangi ko."];
-  let corpusMessage = "Loading local demo corpus...";
-  $$result.css.add(css);
-  let $$settled;
-  let $$rendered;
-  let previous_head = $$result.head;
-  do {
-    $$settled = true;
-    $$result.head = previous_head;
-    models.length > 0 && !!selectedModel;
-    $$rendered = `${$$result.head += `<!-- HEAD_svelte-xjrcas_START -->${$$result.title = `<title>SalinWika | Cebuano to Tagalog</title>`, ""}<meta name="description" content="SalinWika is a local interface for Cebuano to Tagalog translation demos."><!-- HEAD_svelte-xjrcas_END -->`, ""} <main class="page svelte-1ugfj99"><section class="hero svelte-1ugfj99" data-svelte-h="svelte-15gvnjq"><div class="hero__copy svelte-1ugfj99"><p class="hero__eyebrow svelte-1ugfj99">SalinWika</p> <h1 class="svelte-1ugfj99">Cebuano to<br>
-        Tagalog<br>
-        translation.</h1> <p class="hero__tagline svelte-1ugfj99">Paste Cebuano text, pick a local demo model, and translate directly in the UI.</p></div></section> <section class="quick-actions svelte-1ugfj99"><span class="quick-actions__label svelte-1ugfj99" data-svelte-h="svelte-b76wu8">Corpus input</span> <p class="quick-actions__message svelte-1ugfj99">${escape(corpusMessage)}</p> <div class="quick-actions__buttons svelte-1ugfj99">${each(samples, (sample) => {
-      return `<button class="quick-actions__button svelte-1ugfj99">${escape(sample)}</button>`;
-    })}</div></section> ${``} ${models.length ? `<div class="page__controls svelte-1ugfj99">${validate_component(ModelPicker, "ModelPicker").$$render(
-      $$result,
-      { models, selected: selectedModel },
+function ModelPicker($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    let selectedModel;
+    let models = fallback($$props["models"], () => [], true);
+    let selected = fallback($$props["selected"], "");
+    selectedModel = models.find((model) => model.name === selected) ?? null;
+    $$renderer2.push(`<section class="picker svelte-zkyht3" aria-labelledby="model-heading"><div class="picker__header svelte-zkyht3"><div><span class="picker__label svelte-zkyht3">Modelo</span> <h2 id="model-heading" class="svelte-zkyht3">Translation model</h2></div> `);
+    if (selectedModel) {
+      $$renderer2.push(`<!--[0--><div class="picker__summary svelte-zkyht3">`);
+      if (selectedModel.bidirectional) {
+        $$renderer2.push(`<!--[0--><span class="svelte-zkyht3">Bidirectional</span>`);
+      } else {
+        $$renderer2.push("<!--[-1-->");
+      }
+      $$renderer2.push(`<!--]--> `);
+      if (selectedModel.peeky) {
+        $$renderer2.push(`<!--[0--><span class="svelte-zkyht3">Peeky decoder</span>`);
+      } else {
+        $$renderer2.push("<!--[-1-->");
+      }
+      $$renderer2.push(`<!--]--> `);
+      if (selectedModel.bleu != null) {
+        $$renderer2.push(`<!--[0--><span class="svelte-zkyht3">BLEU ${escape_html(selectedModel.bleu.toFixed(1))}</span>`);
+      } else {
+        $$renderer2.push("<!--[-1-->");
+      }
+      $$renderer2.push(`<!--]--></div>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+    }
+    $$renderer2.push(`<!--]--></div> `);
+    $$renderer2.select(
       {
-        selected: ($$value) => {
-          selectedModel = $$value;
-          $$settled = false;
-        }
+        value: selected,
+        class: "picker__select",
+        "aria-label": "Select translation model"
       },
-      {}
-    )}</div>` : `<p class="page__status svelte-1ugfj99" data-svelte-h="svelte-1jg01g3">No local demo model is available yet.</p>`} <section class="panels svelte-1ugfj99">${validate_component(TranslateBox, "TranslateBox").$$render(
-      $$result,
-      { loading, value: inputText },
+      ($$renderer3) => {
+        $$renderer3.push(`<!--[-->`);
+        const each_array = ensure_array_like(models);
+        for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+          let model = each_array[$$index];
+          $$renderer3.option({ value: model.name }, ($$renderer4) => {
+            $$renderer4.push(`${escape_html(model.name)}${escape_html(model.bleu != null ? ` · BLEU ${model.bleu.toFixed(1)}` : "")}`);
+          });
+        }
+        $$renderer3.push(`<!--]-->`);
+      },
+      "svelte-zkyht3"
+    );
+    $$renderer2.push(` `);
+    if (selectedModel) {
+      $$renderer2.push(`<!--[0--><p class="picker__details svelte-zkyht3">${escape_html(selectedModel.name)} is the active run for Cebuano to Tagalog translation.</p>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+    }
+    $$renderer2.push(`<!--]--></section>`);
+    bind_props($$props, { models, selected });
+  });
+}
+function TranslateBox($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    let value = fallback($$props["value"], "");
+    let loading = fallback($$props["loading"], false);
+    let ready = fallback($$props["ready"], false);
+    $$renderer2.push(`<form class="box svelte-r43oqp"><div class="box__header svelte-r43oqp"><label class="box__eyebrow svelte-r43oqp" for="source-text">Source</label> <span class="box__hint svelte-r43oqp">Cebuano input</span></div> <textarea id="source-text" placeholder="Type or choose a Cebuano example" rows="8" aria-describedby="source-help" class="svelte-r43oqp">`);
+    const $$body = escape_html(value);
+    if ($$body) {
+      $$renderer2.push(`${$$body}`);
+    }
+    $$renderer2.push(`</textarea> <p id="source-help" class="box__help svelte-r43oqp">Only the corpus examples are available in this local demo.</p> <button class="box__submit svelte-r43oqp" type="submit"${attr("disabled", loading || !ready || !value.trim(), true)}>${escape_html(loading ? "Translating…" : "Translate to Tagalog")}</button></form>`);
+    bind_props($$props, { value, loading, ready });
+  });
+}
+function ResultCard($$renderer, $$props) {
+  let text = fallback($$props["text"], "");
+  let loading = fallback($$props["loading"], false);
+  let error = fallback($$props["error"], "");
+  $$renderer.push(`<section class="result svelte-1r7q0ep" aria-labelledby="result-heading"><div class="result__header svelte-1r7q0ep"><span id="result-heading" class="result__eyebrow svelte-1r7q0ep">Target</span> <span class="result__hint svelte-1r7q0ep">Tagalog output</span></div> <div class="result__body svelte-1r7q0ep" aria-live="polite">`);
+  if (loading) {
+    $$renderer.push(`<!--[0--><p class="result__status svelte-1r7q0ep">Running translation...</p>`);
+  } else if (error) {
+    $$renderer.push(`<!--[1--><p class="result__error svelte-1r7q0ep">${escape_html(error)}</p>`);
+  } else if (text) {
+    $$renderer.push(`<!--[2--><p>${escape_html(text)}</p>`);
+  } else {
+    $$renderer.push(`<!--[-1--><p class="result__status svelte-1r7q0ep">Your translation will appear here.</p>`);
+  }
+  $$renderer.push(`<!--]--></div></section>`);
+  bind_props($$props, { text, loading, error });
+}
+function _page($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    let canTranslate;
+    let models = [];
+    let selectedModel = "";
+    let inputText = "";
+    let outputText = "";
+    let loading = false;
+    let error = "";
+    let samples = ["Maayong buntag.", "Asa ka paingon?", "Palihog tabangi ko."];
+    let corpusMessage = "Loading local demo corpus...";
+    canTranslate = models.length > 0 && !!selectedModel;
+    let $$settled = true;
+    let $$inner_renderer;
+    function $$render_inner($$renderer3) {
+      head("1uha8ag", $$renderer3, ($$renderer4) => {
+        $$renderer4.title(($$renderer5) => {
+          $$renderer5.push(`<title>SalinWika | Cebuano to Tagalog</title>`);
+        });
+        $$renderer4.push(`<meta name="description" content="SalinWika is a local interface for Cebuano to Tagalog translation demos."/>`);
+      });
+      $$renderer3.push(`<main class="page svelte-1uha8ag"><header class="masthead svelte-1uha8ag"><div><p class="masthead__brand svelte-1uha8ag">SalinWika</p> <h1 class="svelte-1uha8ag">Cebuano to Tagalog</h1></div> <p class="masthead__description svelte-1uha8ag">A local translation demo built from the project corpus.</p></header> <section class="examples svelte-1uha8ag" aria-labelledby="examples-heading"><div class="examples__heading svelte-1uha8ag"><div><p class="examples__label svelte-1uha8ag">Corpus examples</p> <h2 id="examples-heading" class="svelte-1uha8ag">Choose text to translate</h2></div> <p class="examples__message svelte-1uha8ag">${escape_html(corpusMessage)}</p></div> <div class="examples__buttons svelte-1uha8ag"><!--[-->`);
+      const each_array = ensure_array_like(samples);
+      for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+        let sample = each_array[$$index];
+        $$renderer3.push(`<button class="examples__button svelte-1uha8ag" type="button">${escape_html(sample)}</button>`);
+      }
+      $$renderer3.push(`<!--]--></div></section> `);
       {
-        value: ($$value) => {
+        $$renderer3.push("<!--[-1-->");
+      }
+      $$renderer3.push(`<!--]--> `);
+      if (models.length) {
+        $$renderer3.push(`<!--[0--><div class="page__model svelte-1uha8ag">`);
+        ModelPicker($$renderer3, {
+          models,
+          get selected() {
+            return selectedModel;
+          },
+          set selected($$value) {
+            selectedModel = $$value;
+            $$settled = false;
+          }
+        });
+        $$renderer3.push(`<!----></div>`);
+      } else {
+        $$renderer3.push(`<!--[-1--><p class="page__status svelte-1uha8ag">No local demo model is available yet.</p>`);
+      }
+      $$renderer3.push(`<!--]--> <section class="panels svelte-1uha8ag">`);
+      TranslateBox($$renderer3, {
+        loading,
+        ready: canTranslate,
+        get value() {
+          return inputText;
+        },
+        set value($$value) {
           inputText = $$value;
           $$settled = false;
         }
-      },
-      {}
-    )} <div class="panels__divider svelte-1ugfj99" aria-hidden="true"></div> ${validate_component(ResultCard, "ResultCard").$$render($$result, { text: outputText, loading, error }, {}, {})}</section> </main>`;
-  } while (!$$settled);
-  return $$rendered;
-});
+      });
+      $$renderer3.push(`<!----> <div class="panels__divider svelte-1uha8ag" aria-hidden="true"></div> `);
+      ResultCard($$renderer3, { text: outputText, loading, error });
+      $$renderer3.push(`<!----></section></main>`);
+    }
+    do {
+      $$settled = true;
+      $$inner_renderer = $$renderer2.copy();
+      $$render_inner($$inner_renderer);
+    } while (!$$settled);
+    $$renderer2.subsume($$inner_renderer);
+  });
+}
 export {
-  Page as default
+  _page as default
 };

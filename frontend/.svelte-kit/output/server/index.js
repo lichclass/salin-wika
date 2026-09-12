@@ -1,4 +1,5 @@
 import { E as ENDPOINT_METHODS, P as PAGE_METHODS, i as negotiate, m as method_not_allowed, h as handle_error_and_jsonify, j as get_status, k as is_form_content_type, l as normalize_error, o as create_replacer, b as noop$1, q as get_global_name, r as serialize_uses, t as clarify_devalue_error, u as get_node_type, v as escape_html, g as create_remote_key, p as parse_remote_arg, w as deserialize_binary_form, e as stringify, x as split_remote_key, S as SVELTE_KIT_ASSETS, y as static_error_page, z as redirect_response, A as once, B as has_prerendered_path, C as get_set_cookies, T as TRAILING_SLASH_PARAM, I as INVALIDATED_PARAM, D as handle_fatal_error, F as format_server_error } from "./chunks/utils.js";
+import { s as safe_not_equal, D as DEV } from "./chunks/root.js";
 import { json, text, error, isRedirect } from "@sveltejs/kit";
 import { Redirect, SvelteKitError, ActionFailure, HttpError } from "@sveltejs/kit/internal";
 import { with_request_store, merge_tracing, try_get_request_store } from "@sveltejs/kit/internal/server";
@@ -6,28 +7,64 @@ import { c as assets, b as base, a as app_dir, r as relative, o as override, d a
 import * as devalue from "devalue";
 import { d as decode_params, m as make_trackable, a as disable_search, S as SCHEME, v as validate_layout_server_exports, b as validate_layout_exports, c as validate_page_server_exports, e as validate_page_exports, n as normalize_path, r as resolve, f as decode_pathname, g as validate_server_exports } from "./chunks/exports.js";
 import { b as base64_encode, t as text_encoder, g as get_relative_path } from "./chunks/utils2.js";
-import { n as noop, a as safe_not_equal } from "./chunks/ssr.js";
+import { n as noop } from "./chunks/index.js";
 import { p as public_env, r as read_implementation, o as options, s as set_private_env, a as set_public_env, g as get_hooks, b as set_read_implementation } from "./chunks/internal.js";
 import { parse, serialize } from "cookie";
 import * as set_cookie_parser from "set-cookie-parser";
-const DEV = false;
-const s = JSON.stringify;
-function hash(...values) {
-  let hash2 = 5381;
-  for (const value of values) {
-    if (typeof value === "string") {
-      let i = value.length;
-      while (i) hash2 = hash2 * 33 ^ value.charCodeAt(--i);
-    } else if (ArrayBuffer.isView(value)) {
-      const buffer = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-      let i = buffer.length;
-      while (i) hash2 = hash2 * 33 ^ buffer[--i];
-    } else {
-      throw new TypeError("value must be a string or TypedArray");
+const subscriber_queue = [];
+function readable(value, start) {
+  return {
+    subscribe: writable(value, start).subscribe
+  };
+}
+function writable(value, start = noop) {
+  let stop = null;
+  const subscribers = /* @__PURE__ */ new Set();
+  function set(new_value) {
+    if (safe_not_equal(value, new_value)) {
+      value = new_value;
+      if (stop) {
+        const run_queue = !subscriber_queue.length;
+        for (const subscriber of subscribers) {
+          subscriber[1]();
+          subscriber_queue.push(subscriber, value);
+        }
+        if (run_queue) {
+          for (let i = 0; i < subscriber_queue.length; i += 2) {
+            subscriber_queue[i][0](subscriber_queue[i + 1]);
+          }
+          subscriber_queue.length = 0;
+        }
+      }
     }
   }
-  return (hash2 >>> 0).toString(36);
+  function update(fn) {
+    set(fn(
+      /** @type {T} */
+      value
+    ));
+  }
+  function subscribe(run, invalidate = noop) {
+    const subscriber = [run, invalidate];
+    subscribers.add(subscriber);
+    if (subscribers.size === 1) {
+      stop = start(set, update) || noop;
+    }
+    run(
+      /** @type {T} */
+      value
+    );
+    return () => {
+      subscribers.delete(subscriber);
+      if (subscribers.size === 0 && stop) {
+        stop();
+        stop = null;
+      }
+    };
+  }
+  return { set, update, subscribe };
 }
+const s = JSON.stringify;
 function exec(match, params, matchers) {
   const result = {};
   const values = match.slice(1);
@@ -82,53 +119,6 @@ function find_route(path, routes, matchers) {
   }
   return null;
 }
-const subscriber_queue = [];
-function readable(value, start) {
-  return {
-    subscribe: writable(value, start).subscribe
-  };
-}
-function writable(value, start = noop) {
-  let stop;
-  const subscribers = /* @__PURE__ */ new Set();
-  function set(new_value) {
-    if (safe_not_equal(value, new_value)) {
-      value = new_value;
-      if (stop) {
-        const run_queue = !subscriber_queue.length;
-        for (const subscriber of subscribers) {
-          subscriber[1]();
-          subscriber_queue.push(subscriber, value);
-        }
-        if (run_queue) {
-          for (let i = 0; i < subscriber_queue.length; i += 2) {
-            subscriber_queue[i][0](subscriber_queue[i + 1]);
-          }
-          subscriber_queue.length = 0;
-        }
-      }
-    }
-  }
-  function update(fn) {
-    set(fn(value));
-  }
-  function subscribe(run, invalidate = noop) {
-    const subscriber = [run, invalidate];
-    subscribers.add(subscriber);
-    if (subscribers.size === 1) {
-      stop = start(set, update) || noop;
-    }
-    run(value);
-    return () => {
-      subscribers.delete(subscriber);
-      if (subscribers.size === 0 && stop) {
-        stop();
-        stop = null;
-      }
-    };
-  }
-  return { set, update, subscribe };
-}
 const DATA_SUFFIX = "/__data.json";
 const HTML_DATA_SUFFIX = ".html__data.json";
 function has_data_suffix(pathname) {
@@ -153,6 +143,22 @@ function add_resolution_suffix(pathname) {
 }
 function strip_resolution_suffix(pathname) {
   return pathname.slice(0, -ROUTE_SUFFIX.length);
+}
+function hash(...values) {
+  let hash2 = 5381;
+  for (const value of values) {
+    if (typeof value === "string") {
+      let i = value.length;
+      while (i) hash2 = hash2 * 33 ^ value.charCodeAt(--i);
+    } else if (ArrayBuffer.isView(value)) {
+      const buffer = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+      let i = buffer.length;
+      while (i) hash2 = hash2 * 33 ^ buffer[--i];
+    } else {
+      throw new TypeError("value must be a string or TypedArray");
+    }
+  }
+  return (hash2 >>> 0).toString(36);
 }
 function compact(arr) {
   return arr.filter(
@@ -2039,7 +2045,7 @@ async function render_response({
       csp: csp.script_needs_nonce ? { nonce: csp.nonce } : { hash: csp.script_needs_hash },
       transformError: error_components ? (
         /** @param {unknown} e */
-        async (e) => {
+        (async (e) => {
           if (isRedirect(e)) {
             throw e;
           }
@@ -2047,7 +2053,7 @@ async function render_response({
           props.page.error = props.error = error2 = transformed2;
           props.page.status = status = get_status(e);
           return transformed2;
-        }
+        })
       ) : void 0
     };
     const fetch2 = globalThis.fetch;

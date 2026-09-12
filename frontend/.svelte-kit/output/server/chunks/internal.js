@@ -1,86 +1,5 @@
-import { c as create_ssr_component, b as setContext, v as validate_component, m as missing_component } from "./ssr.js";
-import { a as afterUpdate } from "./ssr2.js";
+import { r as root } from "./root.js";
 import "./server.js";
-const Root = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let { stores } = $$props;
-  let { page } = $$props;
-  let { constructors } = $$props;
-  let { components = [] } = $$props;
-  let { form } = $$props;
-  let { data_0 = null } = $$props;
-  let { data_1 = null } = $$props;
-  {
-    setContext("__svelte__", stores);
-  }
-  afterUpdate(stores.page.notify);
-  if ($$props.stores === void 0 && $$bindings.stores && stores !== void 0) $$bindings.stores(stores);
-  if ($$props.page === void 0 && $$bindings.page && page !== void 0) $$bindings.page(page);
-  if ($$props.constructors === void 0 && $$bindings.constructors && constructors !== void 0) $$bindings.constructors(constructors);
-  if ($$props.components === void 0 && $$bindings.components && components !== void 0) $$bindings.components(components);
-  if ($$props.form === void 0 && $$bindings.form && form !== void 0) $$bindings.form(form);
-  if ($$props.data_0 === void 0 && $$bindings.data_0 && data_0 !== void 0) $$bindings.data_0(data_0);
-  if ($$props.data_1 === void 0 && $$bindings.data_1 && data_1 !== void 0) $$bindings.data_1(data_1);
-  let $$settled;
-  let $$rendered;
-  let previous_head = $$result.head;
-  do {
-    $$settled = true;
-    $$result.head = previous_head;
-    {
-      stores.page.set(page);
-    }
-    $$rendered = `  ${constructors[1] ? `${validate_component(constructors[0] || missing_component, "svelte:component").$$render(
-      $$result,
-      {
-        data: data_0,
-        params: page.params,
-        this: components[0]
-      },
-      {
-        this: ($$value) => {
-          components[0] = $$value;
-          $$settled = false;
-        }
-      },
-      {
-        default: () => {
-          return `${validate_component(constructors[1] || missing_component, "svelte:component").$$render(
-            $$result,
-            {
-              data: data_1,
-              form,
-              params: page.params,
-              this: components[1]
-            },
-            {
-              this: ($$value) => {
-                components[1] = $$value;
-                $$settled = false;
-              }
-            },
-            {}
-          )}`;
-        }
-      }
-    )}` : `${validate_component(constructors[0] || missing_component, "svelte:component").$$render(
-      $$result,
-      {
-        data: data_0,
-        form,
-        params: page.params,
-        this: components[0]
-      },
-      {
-        this: ($$value) => {
-          components[0] = $$value;
-          $$settled = false;
-        }
-      },
-      {}
-    )}`} ${``}`;
-  } while (!$$settled);
-  return $$rendered;
-});
 let read_implementation = null;
 function set_read_implementation(fn) {
   read_implementation = fn;
@@ -176,7 +95,7 @@ const options = {
   hooks: null,
   // added lazily, via `get_hooks`
   preload_strategy: "modulepreload",
-  root: Root,
+  root,
   service_worker: false,
   service_worker_options: void 0,
   server_error_boundaries: false,
@@ -184,7 +103,7 @@ const options = {
     app: ({ head, body, assets, nonce, env }) => '<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="utf-8" />\n    <link rel="icon" href="data:," />\n    <meta name="viewport" content="width=device-width, initial-scale=1" />\n    ' + head + '\n  </head>\n  <body data-sveltekit-preload-data="hover">\n    <div style="display: contents">' + body + "</div>\n  </body>\n</html>\n",
     error
   },
-  version_hash: "jdvzay"
+  version_hash: "1gffkb9"
 };
 async function get_hooks() {
   let handle;

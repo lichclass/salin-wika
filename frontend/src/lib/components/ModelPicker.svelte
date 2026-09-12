@@ -7,11 +7,11 @@
   $: selectedModel = models.find((model) => model.name === selected) ?? null;
 </script>
 
-<section class="picker">
+<section class="picker" aria-labelledby="model-heading">
   <div class="picker__header">
     <div>
       <span class="picker__label">Modelo</span>
-      <h2>Available runs</h2>
+      <h2 id="model-heading">Translation model</h2>
     </div>
     {#if selectedModel}
       <div class="picker__summary">
@@ -52,8 +52,7 @@
     padding: 1rem;
     background: rgba(33, 43, 55, 0.9);
     border: 1px solid var(--color-border);
-    border-radius: 20px;
-    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.22);
+    border-radius: 6px;
     box-sizing: border-box;
   }
 
@@ -87,7 +86,7 @@
 
   .picker__summary span {
     padding: 0.3rem 0.55rem;
-    border-radius: 999px;
+    border-radius: 4px;
     background: rgba(212, 162, 76, 0.12);
     border: 1px solid rgba(212, 162, 76, 0.22);
     color: var(--color-accent-gold);
@@ -100,7 +99,7 @@
     background: var(--color-surface-raised);
     color: var(--color-text);
     border: 1px solid var(--color-border);
-    border-radius: 14px;
+    border-radius: 4px;
     padding: 0.5rem 0.75rem;
     font-size: 0.95rem;
     box-sizing: border-box;
